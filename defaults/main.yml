@@ -1,0 +1,5 @@
+---
+# defaults file for ansible-role-tomb
+tomb_install_prefix: '/usr/local'
+tomb_version: 'latest'
+tomb_install_optional_packages: False

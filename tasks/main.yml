@@ -1,0 +1,76 @@
+---
+# tasks file for ansible-role-tomb
+
+- name: install necessary tools
+  apt:
+    name: "{{ item }}"
+  with_items: "{{ tomb_required_packages }}"
+
+- name: Check for tomb installation
+  stat:
+    path: "{{tomb_install_prefix}}/bin/tomb"
+  register: st
+
+- name: Get latest version info
+  uri:
+    url: "{{tomb_meta_json}}"
+    method: GET
+    return_content: yes
+  register: latest_version_info
+
+- name: Set latest version as fact
+  set_fact:
+    tomb_version: "{{ (latest_version_info.content|from_json|first).name }}"
+  when: tomb_version == "latest"
+
+- name: Check tomb version
+  shell: |
+    grep 'VERSION="{{tomb_version | replace('v', '')}}"' {{tomb_install_prefix}}/bin/tomb
+  register: ver
+  when: st.stat.exists
+  failed_when: false
+  changed_when: false
+
+- name: Install tomb
+  block:
+    - name: Set archive name as fact unless testing
+      set_fact:
+        tomb_tgz: "tomb_{{tomb_version}}.tar.gz"
+    - name: Set install url as fact unless testing
+      set_fact:
+        tomb_tgz_url: "{{tomb_url}}/{{tomb_version}}.tar.gz"
+    - name: Download tomb archive
+      get_url:
+        url: "{{tomb_tgz_url}}"
+        dest: "/tmp/{{tomb_tgz}}"
+        mode: 0644
+    - name: Create extraction directory
+      file:
+        path: /tmp/tomb
+        state: directory
+    - name: Unarchive tomb archive
+      unarchive:
+        copy: no
+        src: "/tmp/{{tomb_tgz}}"
+        dest: "/tmp/tomb"
+        extra_opts:
+          - "--strip=1"
+    - name: Install tomb
+      command: make install PREFIX={{tomb_install_prefix}}
+      become: True
+      args:
+        chdir: /tmp/tomb
+    - name: Remove archive and extraction directory
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - /tmp/{{tomb_tgz}}
+        - /tmp/tomb
+    - name: Install optional packages
+      apt:
+        name: "{{ item }}"
+      with_items: "{{ tomb_optional_tools }}"
+      when: tomb_install_optional_packages
+  when:
+    - ver|failed or not st.stat.exists
