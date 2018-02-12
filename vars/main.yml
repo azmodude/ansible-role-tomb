@@ -4,6 +4,7 @@ tomb_url: 'https://github.com/dyne/Tomb/archive'
 tomb_meta_json: 'https://api.github.com/repos/dyne/Tomb/tags'
 
 tomb_required_packages:
+  - make
   - zsh
   - sudo
   - gnupg
