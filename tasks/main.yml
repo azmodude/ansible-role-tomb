@@ -1,7 +1,7 @@
 ---
 # tasks file for ansible-role-tomb
 
-- name: install necessary tools
+- name: Install required tools
   package:
     name: "{{ item }}"
   with_items: "{{ tomb_required_packages }}"
@@ -74,5 +74,5 @@
       with_items: "{{ tomb_optional_tools }}"
       when: tomb_install_optional_packages
   when:
-    - ver|failed or not st.stat.exists
+    - ver is failed or not st.stat.exists
   become: True
