@@ -3,8 +3,7 @@
 
 - name: Install required tools
   package:
-    name: "{{ item }}"
-  with_items: "{{ tomb_required_packages }}"
+    name: "{{ tomb_required_packages }}"
   become: True
 
 - name: Check for tomb installation
@@ -70,8 +69,7 @@
         - /tmp/tomb
     - name: Install optional packages
       package:
-        name: "{{ item }}"
-      with_items: "{{ tomb_optional_tools }}"
+        name: "{{ tomb_optional_tools }}"
       when: tomb_install_optional_packages
   when:
     - ver is failed or not st.stat.exists
